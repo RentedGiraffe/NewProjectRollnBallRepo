@@ -5,11 +5,8 @@ using TMPro;
 
 public class PlayerControls : MonoBehaviour
 {
-    private int count;
-    public TextMeshProUGUI countText;
-    public GameObject winTextObject;
 
-    #region Variables
+    #region Movement Variables
     public float moveSpeed = 5f;
     private float xInput;
     private float zInput;
@@ -17,15 +14,17 @@ public class PlayerControls : MonoBehaviour
     private Vector3 moveDirection;
     #endregion
 
+    [SerializeField] GameObject PlayerRender;
+    #region Text Variables
+    private int pickUpCount;
+    #endregion
+
     // Start is called before the first frame update
     void Start()
     {
-        SetCountText();
+        pickUpCount = 0;
         playerController = GetComponent<CharacterController>();
-        count = 0;
-
-        SetCountText();
-        winTextObject.SetActive(false);
+        FindObjectOfType<GameManager>().setCountText(pickUpCount);
     }
 
     // Update is called once per frame
@@ -35,32 +34,26 @@ public class PlayerControls : MonoBehaviour
         zInput = Input.GetAxis("Vertical");
     }
 
-    void SetCountText()
-    {
-        countText.text = "Count: " + count.ToString(); 
-        if(count >= 16)
-        {
-            winTextObject.SetActive(true);
-        }
-        
-    }
-    void FixedUpdate()
+    private void FixedUpdate()
     {
         moveDirection = new Vector3(xInput, 0, zInput);
         playerController.Move(moveDirection * moveSpeed * Time.deltaTime);
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(Collider other) //A function called whenever the player enters a trigger
     {
-        if (other.gameObject.CompareTag("PickUp"))
+        if (other.gameObject.CompareTag("PickUp")) //If the player hits a pickup...
         {
-            other.gameObject.SetActive(false);
-            count = count + 1;
-
-
-            SetCountText();
+            pickUpCount += 1; //Increment the score
+            FindObjectOfType<GameManager>().setCountText(pickUpCount); //Tell the Game Manager to update the score text
+            other.gameObject.SetActive(false); //Despawn the pickup game object
+        }
+        else if (other.gameObject.CompareTag("Enemy")) // If the player hits an enemy...
+        {
+            PlayerRender.SetActive(false);
+            this.GetComponent<PlayerControls>().enabled = false;
+            FindObjectOfType<GameManager>().EndGame(); //Tell the Game Manager to reset the level
         }
     }
-} 
- 
- 
+
+}
